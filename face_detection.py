@@ -1,9 +1,11 @@
+from getpass import getuser
 import pandas as pd
 import cv2
 import urllib.request
 import numpy as np
 import os
 from datetime import datetime
+from datetime import date
 import face_recognition
 import firebase_admin
 from firebase_admin import credentials
@@ -54,12 +56,14 @@ def main():
             matchIndex = np.argmin(faceDis)
             print(matchIndex)
             if matches[matchIndex]:
-                name = classNames[matchIndex].upper()
+                name = classNames[matchIndex]
+                name2 = getUsername(name)
+                print(name2)
                 y1, x2, y2, x1 = faceLoc
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
-                cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+                cv2.putText(img, name2, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
                 markAttendance(name)
     
         cv2.imshow('Webcam', img)
@@ -72,14 +76,52 @@ def main():
 def firebaseInit():
     cred = credentials.Certificate("abseniot-4c2f98454c78.json")
     firebase_admin.initialize_app(cred)
+    global db
     db = firestore.client()
-    doc_ref = db.collection(u'users').document(u'alovelace')
-    doc_ref.set({
-        u'first': u'Ada',
-        u'last': u'Lovelace',
-        u'born': 1815
-    })
- 
+    # doc_ref = db.collection(u'users').document(u'alovelace')
+    # doc_ref.set({
+    #     u'first': u'Ada',
+    #     u'last': u'Lovelace',
+    #     u'born': 1815
+    # })
+
+def writeFirestore(name):
+    today = date.today()
+    currentDate = today.strftime("%d-%m-%y")
+    now = datetime.now()
+    nowSrtring = now.strftime('%H:%M:%S')
+
+    print(currentDate)
+    try:
+        doc_ref = db.collection(u'days').document(currentDate)
+        user_ref = doc_ref.collection(u'user').document(name)
+        user_ref.update({
+            u'time': nowSrtring,
+            u'uid': name,
+        })
+    except:
+        doc_ref = db.collection(u'days').document(currentDate)
+        user_ref = doc_ref.collection(u'user').document(name)
+        user_ref.set({
+            u'time': nowSrtring,
+            u'uid': name,
+        })
+        print('belum ada entry hari ini')
+    else: 
+        print('sudah ada entry hari ini')
+
+def getUsername(id):
+    
+    doc_ref = db.collection(u'users').document(id)
+    doc = doc_ref.get()
+    if doc.exists:
+        # print(id)
+        # print(f'Document data: {doc.to_dict()["name"]}')
+        newName = doc.to_dict()["name"]
+        return(newName)
+    else:
+        print(u'No such document!')
+
 def findEncodings(images):
     encodeList = []
     for img in images:
@@ -90,6 +132,7 @@ def findEncodings(images):
  
  
 def markAttendance(name):
+    writeFirestore(name)
     try:
         with open("Attendance.csv", 'r+') as f:
             myDataList = f.readlines()
