@@ -16,7 +16,6 @@ def main():
     ##'''cam.bmp / cam-lo.jpg /cam-hi.jpg / cam.mjpeg '''
     
     if 'Attendance.csv' in os.listdir(os.path.join(os.getcwd(),'')):
-        print("there iss..")
         os.remove("Attendance.csv")
     # else:
     df=pd.DataFrame(list())
@@ -33,20 +32,14 @@ def main():
         images.append(curImg)
         classNames.append(os.path.splitext(cl)[0])
     print(classNames)
-
-
     
     encodeListKnown = findEncodings(images)
     print('Encoding Complete')
     
-    #cap = cv2.VideoCapture(0)
-    
     while True:
-        #success, img = cap.read()
         img_resp=urllib.request.urlopen(url)
         imgnp=np.array(bytearray(img_resp.read()),dtype=np.uint8)
         img=cv2.imdecode(imgnp,-1)
-    # img = captureScreen()
         imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
         imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
     
@@ -58,12 +51,10 @@ def main():
             print(matches)
             faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
             print(faceDis)
-    # print(faceDis)
             matchIndex = np.argmin(faceDis)
             print(matchIndex)
             if matches[matchIndex]:
                 name = classNames[matchIndex].upper()
-    # print(name)
                 y1, x2, y2, x1 = faceLoc
                 y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -79,10 +70,6 @@ def main():
     cv2.imread
 
 def firebaseInit():
-    # cred = credentials.ApplicationDefault()
-    # firebase_admin.initialize_app(cred, {
-    # 'projectId': project_id,
-    # })
     cred = credentials.Certificate("abseniot-4c2f98454c78.json")
     firebase_admin.initialize_app(cred)
     db = firestore.client()
@@ -103,7 +90,6 @@ def findEncodings(images):
  
  
 def markAttendance(name):
-    # print(f'marking attendance | {os.path} | {os.getcwd()}')
     try:
         with open("Attendance.csv", 'r+') as f:
             myDataList = f.readlines()
