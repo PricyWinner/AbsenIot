@@ -1,10 +1,11 @@
 from getpass import getuser
+from time import time
 import pandas as pd
 import cv2
 import urllib.request
 import numpy as np
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from datetime import date
 import face_recognition
 import firebase_admin
@@ -88,22 +89,22 @@ def firebaseInit():
 def writeFirestore(name):
     today = date.today()
     currentDate = today.strftime("%d-%m-%y")
-    now = datetime.now()
-    nowSrtring = now.strftime('%H:%M:%S')
+    now = datetime.now(timezone.utc)
+    # nowSrtring = now.strftime('%H:%M:%S')
 
     print(currentDate)
     try:
         doc_ref = db.collection(u'days').document(currentDate)
         user_ref = doc_ref.collection(u'user').document(name)
         user_ref.update({
-            u'time': nowSrtring,
+            u'time': now,
             u'uid': name,
         })
     except:
         doc_ref = db.collection(u'days').document(currentDate)
         user_ref = doc_ref.collection(u'user').document(name)
         user_ref.set({
-            u'time': nowSrtring,
+            u'time': now,
             u'uid': name,
         })
         print('belum ada entry hari ini')
